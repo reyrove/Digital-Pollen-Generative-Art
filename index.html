@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Digital Pollen</title>
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="fav.svg">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      background: #0a0a0a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', Roboto, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+    }
+    
+    #main-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      padding: 20px;
+      gap: 8px;
+    }
+    
+    .title-bar {
+      text-align: center;
+      flex-shrink: 0;
+      padding: 2px 0;
+      width: 100%;
+    }
+    .title-bar .title {
+      font-size: 22px;
+      font-weight: 300;
+      letter-spacing: 8px;
+      color: rgba(255,255,255,0.85);
+      text-transform: uppercase;
+    }
+    .title-bar .title .accent {
+      color: #c9a84c;
+      font-weight: 400;
+    }
+    
+    #canvas-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      min-height: 0;
+      padding: 0 10px;
+      position: relative;
+    }
+    
+    #canvas-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      box-shadow: 0 0 80px rgba(0,0,0,0.9);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+      background: #0a0a0a;
+    }
+    
+    #canvas-wrapper canvas {
+      display: block !important;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain;
+      border-radius: 2px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+    
+    #shirt-mockup {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 2px;
+      box-shadow: 0 0 80px rgba(0,0,0,0.9);
+      z-index: 2;
+    }
+    #shirt-mockup.active {
+      display: block !important;
+      animation: fadeIn 0.6s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    
+    .bottom-bar {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 6px;
+      padding: 4px 0;
+    }
+    
+    .controls-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .controls {
+      color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.04);
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', Roboto, Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      border: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: all 0.3s ease;
+      letter-spacing: 0.8px;
+      touch-action: manipulation;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .controls:hover {
+      color: rgba(255,255,255,0.95);
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+    }
+    .controls:active {
+      transform: scale(0.95);
+    }
+    .controls .key {
+      color: rgba(255,255,255,0.5);
+      font-weight: 300;
+    }
+    .controls .sep {
+      color: rgba(255,255,255,0.15);
+      margin: 0 4px;
+    }
+    
+    .controls.shirt-btn {
+      border-color: rgba(201, 168, 76, 0.2);
+      color: rgba(201, 168, 76, 0.7);
+      letter-spacing: 1px;
+    }
+    .controls.shirt-btn:hover {
+      border-color: rgba(201, 168, 76, 0.4);
+      color: #c9a84c;
+      background: rgba(201, 168, 76, 0.06);
+    }
+    .controls.shirt-btn.active {
+      border-color: rgba(201, 168, 76, 0.5);
+      color: #c9a84c;
+      background: rgba(201, 168, 76, 0.08);
+    }
+    .controls.shirt-btn .icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+    
+    .info-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      color: rgba(255,255,255,0.3);
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      flex-wrap: wrap;
+      padding: 2px 0;
+    }
+    .info-row .info-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.02);
+    }
+    .info-row .label {
+      color: rgba(255,255,255,0.25);
+      font-weight: 300;
+    }
+    .info-row .value {
+      color: rgba(255,255,255,0.6);
+      font-weight: 400;
+    }
+    
+    .description {
+      display: block;
+      text-align: center;
+      color: rgba(255,255,255,0.25);
+      font-size: 8px;
+      letter-spacing: 1.2px;
+      line-height: 1.8;
+      padding: 2px 10px;
+      font-weight: 300;
+      max-width: 500px;
+      width: 100%;
+      text-transform: uppercase;
+    }
+    .description .highlight {
+      color: rgba(255,255,255,0.4);
+    }
+    .description .sep {
+      color: rgba(255,255,255,0.08);
+      margin: 0 4px;
+    }
+    
+    @media (max-width: 1024px) {
+      #main-container { padding: 16px; gap: 6px; }
+      .title-bar .title { font-size: 20px; letter-spacing: 6px; }
+      .controls { font-size: 10px; padding: 7px 16px; min-height: 34px; }
+      .info-row { font-size: 8.5px; gap: 12px; }
+      .info-row .info-item { padding: 2px 10px; }
+      .description { font-size: 7.5px; letter-spacing: 1px; }
+    }
+    
+    @media (max-width: 768px) {
+      #main-container { padding: 12px; gap: 5px; }
+      .title-bar .title { font-size: 17px; letter-spacing: 5px; }
+      #canvas-container { padding: 0 6px; }
+      .controls { font-size: 9px; padding: 6px 14px; min-height: 32px; letter-spacing: 0.6px; }
+      .controls-row { gap: 6px; }
+      .info-row { font-size: 8px; gap: 10px; }
+      .info-row .info-item { padding: 2px 8px; }
+      .description { font-size: 7px; letter-spacing: 0.8px; padding: 2px 6px; }
+      .controls.shirt-btn .icon { font-size: 12px; }
+    }
+    
+    @media (max-width: 480px) {
+      #main-container { padding: 8px; gap: 4px; }
+      .title-bar .title { font-size: 14px; letter-spacing: 4px; }
+      #canvas-container { padding: 0 4px; }
+      .controls { font-size: 8px; padding: 5px 12px; min-height: 28px; border-radius: 24px; letter-spacing: 0.4px; }
+      .controls-row { gap: 4px; }
+      .info-row { font-size: 7px; gap: 8px; }
+      .info-row .info-item { padding: 2px 6px; gap: 4px; }
+      .description { font-size: 6.5px; letter-spacing: 0.6px; padding: 2px 4px; line-height: 1.6; }
+      .controls.shirt-btn .icon { font-size: 11px; }
+    }
+    
+    @media (max-width: 380px) {
+      #main-container { padding: 6px; gap: 3px; }
+      .title-bar .title { font-size: 12px; letter-spacing: 3px; }
+      #canvas-container { padding: 0 2px; }
+      .controls { font-size: 7px; padding: 4px 10px; min-height: 26px; border-radius: 20px; }
+      .info-row { font-size: 6.5px; gap: 6px; }
+      .info-row .info-item { padding: 1px 5px; border-radius: 14px; }
+      .description { font-size: 6px; letter-spacing: 0.5px; padding: 1px 3px; }
+      .controls.shirt-btn .icon { font-size: 10px; }
+    }
+    
+    @media (orientation: landscape) and (max-height: 500px) {
+      #main-container { padding: 10px 20px; gap: 4px; flex-direction: row; flex-wrap: wrap; }
+      .title-bar { width: 100%; flex-shrink: 0; }
+      .title-bar .title { font-size: 16px; letter-spacing: 4px; }
+      #canvas-container { flex: 1; min-height: 0; height: 100%; padding: 0 8px; }
+      .bottom-bar { width: auto; max-width: 180px; flex-shrink: 0; gap: 4px; padding: 0 4px; }
+      .controls { font-size: 8px; padding: 5px 12px; min-height: 28px; letter-spacing: 0.4px; }
+      .controls-row { flex-direction: column; gap: 4px; }
+      .info-row { font-size: 7px; gap: 6px; flex-direction: column; align-items: stretch; }
+      .info-row .info-item { padding: 2px 8px; justify-content: center; }
+      .description { font-size: 6px; max-width: 160px; padding: 1px 4px; line-height: 1.4; letter-spacing: 0.5px; }
+    }
+    
+    @media (orientation: landscape) and (max-height: 380px) {
+      #main-container { padding: 6px 12px; gap: 3px; }
+      .title-bar .title { font-size: 13px; letter-spacing: 3px; }
+      #canvas-container { padding: 0 4px; }
+      .bottom-bar { max-width: 140px; gap: 3px; }
+      .controls { font-size: 7px; padding: 4px 10px; min-height: 24px; border-radius: 16px; }
+      .info-row { font-size: 6px; gap: 4px; }
+      .info-row .info-item { padding: 1px 6px; }
+      .description { font-size: 5.5px; max-width: 120px; padding: 1px 3px; }
+    }
+    
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+      #canvas-wrapper canvas { image-rendering: auto; }
+    }
+    
+    @supports (-webkit-touch-callout: none) {
+      .controls { min-height: 40px; }
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      .controls, #canvas-wrapper canvas, #shirt-mockup { transition: none; }
+      #shirt-mockup.active { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- MAIN CONTAINER -->
+<div id="main-container">
+
+  <div class="title-bar">
+    <div class="title"><span class="accent">Digital</span> Pollen</div>
+  </div>
+
+  <div id="canvas-container">
+    <div id="canvas-wrapper">
+      <!-- YOUR ORIGINAL CANVAS GOES HERE -->
+      <canvas id="pollenCanvas"></canvas>
+      <img id="shirt-mockup" src="Digital-Pollen.jpg" alt="Digital Pollen on T-Shirt" />
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+
+    <div class="controls-row">
+      <div class="controls" id="controlsBar">
+        <span class="key">●</span> regenerate <span class="sep">—</span> <span class="key">S</span> save
+      </div>
+      <div class="controls shirt-btn" id="shirtToggle">
+        <span class="icon">◷</span> apparel
+      </div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-item">
+        <span class="label">grid</span>
+        <span class="value" id="gridDisplay">---</span>
+      </div>
+      <div class="info-item">
+        <span class="label">mode</span>
+        <span class="value" id="modeDisplay">---</span>
+      </div>
+    </div>
+
+    <div class="description">
+      <span class="highlight">digital pollen</span>
+      <span class="sep">·</span>
+      <span class="highlight">noise curves</span>
+      <span class="sep">·</span>
+      <span class="highlight">generative art</span>
+      <span class="sep">·</span>
+      <span class="highlight">organic patterns</span>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ============================================
+// DIGITAL POLLEN — YOUR EXACT ORIGINAL ART
+// ============================================
+
+(function() {
+  // ----  capture canvas and context ----
+  const canvas = document.getElementById('pollenCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  // ----  state variables (mirror original) ----
+  let cs;
+  let spacing, cols, rows;
+  let freq1, freq2, freq3, phase1, phase2, phase3;
+  let angleMultiplier, palette = [], isGothMode = false;
+  let showingShirt = false;
+
+  // ----  helpers (seed, resize, etc) ----
+  function setSeeds() {
+    // randomize all seeds (called on setup & resize)
+    // but we keep random() from p5 style → we use Math.random()
+  }
+
+  // ----  rebuild palette & params (based on original logic) ----
+  function buildPaletteAndParams() {
+    // frequency & phase (as original)
+    freq1 = (0.5 + Math.random() * 2.5) / cs;
+    freq2 = (0.5 + Math.random() * 2.5) / cs;
+    freq3 = (0.1 + Math.random() * 1.9) / cs;
+    phase1 = Math.random() * 2 * Math.PI;
+    phase2 = Math.random() * 2 * Math.PI;
+    phase3 = Math.random() * 2 * Math.PI;
+    angleMultiplier = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
+
+    // palettes from original
+    const palettes = [
+      [200, 220, 260, 280, 300, 180, 240, 320],
+      [0, 10, 340, 350, 20, 30, 330, 15],
+      [330, 345, 10, 15, 25, 300, 320, 350],
+      [290, 310, 325, 340, 355, 270, 280, 300],
+      [250, 270, 300, 320, 0, 220, 280, 340],
+      [120, 140, 160, 180, 200, 100, 220, 240],
+      [30, 45, 60, 75, 90, 15, 105, 120],
+      [160, 180, 200, 220, 240, 140, 260, 280]
+    ];
+    let chosen = palettes[Math.floor(Math.random() * palettes.length)];
+    let baseHue = chosen[Math.floor(Math.random() * chosen.length)];
+    isGothMode = (chosen === palettes[4]); // palette index 4 → goth mode
+
+    // build main palette (16 colors)
+    palette = [];
+    for (let i = 0; i < 16; i++) {
+      let h = (baseHue + (Math.random() * 160 - 80) + 360) % 360;
+      let s = isGothMode ? 30 + Math.random() * 40 : 60 + Math.random() * 40;
+      let l = isGothMode ? 20 + Math.random() * 40 : 40 + Math.random() * 45;
+      let a = 80 + Math.random() * 20;
+      palette.push({ h, s, l, a });
+    }
+
+    // complementary block (8 colors)
+    let compHue = (baseHue + 180) % 360;
+    for (let i = 0; i < 8; i++) {
+      let h = (compHue + (Math.random() * 60 - 30) + 360) % 360;
+      let s = isGothMode ? 25 + Math.random() * 40 : 65 + Math.random() * 30;
+      let l = isGothMode ? 25 + Math.random() * 30 : 45 + Math.random() * 35;
+      let a = 70 + Math.random() * 25;
+      palette.push({ h, s, l, a });
+    }
+  }
+
+  // ----  color conversion HSL → CSS hsla() ----
+  function hslaStr(h, s, l, a) {
+    return `hsla(${h}, ${s}%, ${l}%, ${a/100})`;
+  }
+
+  // ----  draw curve (exact port) ----
+  function drawCurve(startX, startY, ctx) {
+    let cx = startX;
+    let cy = startY;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+
+    let curveLength = cs * (0.05 + Math.random() * 0.10);
+    let stepSize = cs * (0.0015 + Math.random() * 0.0015);
+    let maxDeviation = cs * 0.1;
+    let segments = Math.floor(curveLength / stepSize);
+    
+    for (let i = 0; i < segments; i++) {
+      if (Math.hypot(cx - startX, cy - startY) > maxDeviation) break;
+
+      let angle = 
+        noise3D(cx * freq1, cy * freq1, phase1) * 2 * Math.PI * angleMultiplier +
+        noise3D(cx * freq2, cy * freq2, phase2) * 2 * Math.PI +
+        noise3D(cx * freq3, cy * freq3, phase3) * Math.PI;
+      
+      cx += Math.cos(angle) * stepSize;
+      cy += Math.sin(angle) * stepSize;
+      
+      cx = Math.min(Math.max(cx, -cs * 0.1), cs * 1.1);
+      cy = Math.min(Math.max(cy, -cs * 0.1), cs * 1.1);
+      
+      ctx.lineTo(cx, cy);
+    }
+    ctx.stroke();
+  }
+
+  // ----  simple 3D noise (value noise style) ----
+  function noise3D(x, y, z) {
+    let X = Math.floor(x) & 255;
+    let Y = Math.floor(y) & 255;
+    let Z = Math.floor(z) & 255;
+    let fx = x - Math.floor(x);
+    let fy = y - Math.floor(y);
+    let fz = z - Math.floor(z);
+    let u = fx * fx * (3 - 2 * fx);
+    let v = fy * fy * (3 - 2 * fy);
+    let w = fz * fz * (3 - 2 * fz);
+    
+    function hash(p, q, r) {
+      let h = (p * 374761393 + q * 668265263 + r * 1274126177) & 0x7fffffff;
+      h = (h ^ (h >> 13)) * 1274126177;
+      return (h ^ (h >> 16)) / 0x7fffffff;
+    }
+    
+    let c000 = hash(X, Y, Z);
+    let c100 = hash(X+1, Y, Z);
+    let c010 = hash(X, Y+1, Z);
+    let c110 = hash(X+1, Y+1, Z);
+    let c001 = hash(X, Y, Z+1);
+    let c101 = hash(X+1, Y, Z+1);
+    let c011 = hash(X, Y+1, Z+1);
+    let c111 = hash(X+1, Y+1, Z+1);
+    
+    let x1 = c000 + (c100 - c000) * u;
+    let x2 = c010 + (c110 - c010) * u;
+    let y1 = x1 + (x2 - x1) * v;
+    let x3 = c001 + (c101 - c001) * u;
+    let x4 = c011 + (c111 - c011) * u;
+    let y2 = x3 + (x4 - x3) * v;
+    return y1 + (y2 - y1) * w;
+  }
+
+  // ----  draw decorative rects ----
+  function drawDecorativeElements(ctx) {
+    for (let i = 0; i < 3; i++) {
+      let col = palette[Math.floor(Math.random() * palette.length)];
+      ctx.strokeStyle = hslaStr(col.h, col.s, col.l, col.a);
+      ctx.lineWidth = cs * (0.001 + i * 0.001);
+      let offset = cs * (0.05 + i * 0.01);
+      let size = cs * (0.9 - i * 0.02);
+      ctx.strokeRect(offset, offset, size, size);
+    }
+  }
+
+  // ----  main draw ----
+  function render() {
+    const wrapper = document.getElementById('canvas-wrapper');
+    const rect = wrapper.getBoundingClientRect();
+    cs = Math.min(rect.width, rect.height);
+    
+    canvas.width = cs;
+    canvas.height = cs;
+    canvas.style.width = cs + 'px';
+    canvas.style.height = cs + 'px';
+    canvas.style.position = 'absolute';
+    canvas.style.top = '50%';
+    canvas.style.left = '50%';
+    canvas.style.transform = 'translate(-50%, -50%)';
+    canvas.style.zIndex = '1';
+    canvas.style.display = showingShirt ? 'none' : 'block';
+    
+    spacing = cs * 0.02;
+    cols = Math.floor(cs / spacing);
+    rows = Math.floor(cs / spacing);
+
+    buildPaletteAndParams();
+
+    document.getElementById('gridDisplay').textContent = `${cols}×${rows}`;
+    document.getElementById('modeDisplay').textContent = isGothMode ? 'Goth' : 'Vibrant';
+
+    ctx.clearRect(0, 0, cs, cs);
+    ctx.fillStyle = '#100b18';
+    ctx.fillRect(0, 0, cs, cs);
+    
+    ctx.shadowBlur = cs * 0.008;
+    ctx.shadowColor = isGothMode ? 'hsla(340, 80%, 60%, 0.6)' : 'hsla(0, 0%, 100%, 0.5)';
+
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        if (Math.random() > 0.3) continue;
+        let px = x * spacing;
+        let py = y * spacing;
+        
+        let col = palette[Math.floor(Math.random() * palette.length)];
+        let alpha = 60 + Math.random() * 40;
+        ctx.strokeStyle = hslaStr(col.h, col.s, col.l, alpha);
+        ctx.lineWidth = cs * (0.001 + Math.random() * 0.002);
+        
+        drawCurve(px, py, ctx);
+      }
+    }
+
+    drawDecorativeElements(ctx);
+
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+  }
+
+  // ----  regenerate ----
+  function regenerate() {
+    if (showingShirt) {
+      toggleShirt();
+    }
+    render();
+  }
+
+  // ----  download ----
+  function downloadCanvas() {
+    if (showingShirt) {
+      const link = document.createElement('a');
+      link.download = 'Digital_Pollen_Shirt.png';
+      const img = document.getElementById('shirt-mockup');
+      if (img && img.src) {
+        link.href = img.src;
+      }
+      link.click();
+      return;
+    }
+    
+    const link = document.createElement('a');
+    const hash = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    link.download = 'Digital_Pollen_' + hash + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // ----  toggle shirt ----
+  function toggleShirt() {
+    showingShirt = !showingShirt;
+    const shirtMockup = document.getElementById('shirt-mockup');
+    const shirtToggle = document.getElementById('shirtToggle');
+    
+    if (showingShirt) {
+      canvas.style.display = 'none';
+      shirtMockup.classList.add('active');
+      shirtToggle.classList.add('active');
+      shirtToggle.innerHTML = '<span class="icon">◷</span> artwork';
+    } else {
+      canvas.style.display = 'block';
+      shirtMockup.classList.remove('active');
+      shirtToggle.classList.remove('active');
+      shirtToggle.innerHTML = '<span class="icon">◷</span> apparel';
+    }
+  }
+
+  // ----  resize handler ----
+  let resizeTmr = null;
+
+  function handleResize() {
+    clearTimeout(resizeTmr);
+    resizeTmr = setTimeout(() => {
+      regenerate();
+    }, 300);
+  }
+
+  // ----  init ----
+  function init() {
+    render();
+    
+    window.addEventListener('resize', handleResize);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        downloadCanvas();
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        regenerate();
+      }
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        toggleShirt();
+      }
+      if (e.key === ' ' || e.key === 'Space') {
+        e.preventDefault();
+        regenerate();
+      }
+    });
+
+    document.getElementById('controlsBar').addEventListener('click', regenerate);
+    document.getElementById('controlsBar').addEventListener('touchend', function(e) {
+      e.preventDefault();
+      regenerate();
+    });
+
+    document.getElementById('shirtToggle').addEventListener('click', toggleShirt);
+    document.getElementById('shirtToggle').addEventListener('touchend', function(e) {
+      e.preventDefault();
+      toggleShirt();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.regenerate = regenerate;
+  window.saveImage = downloadCanvas;
+  window.toggleShirt = toggleShirt;
+})();
+</script>
+</body>
+</html>
