@@ -1828,18 +1828,20 @@ function hslaStr(h, s, l, a) {
 // RENDER COMPOSITION
 // ============================================================
 
-function renderComposition(canvas, feats, r) {
+function renderComposition(canvas, feats, r, artSize) {
   const ctx = canvas.getContext('2d');
-  const cs = Math.min(canvas.width, canvas.height);
+  
+  // Use provided artSize (usually canvas.width) to scale correctly for non-square formats
+  const cs = artSize !== undefined ? artSize : Math.min(canvas.width, canvas.height);
 
   // Fill dark background
   ctx.fillStyle = '#100b18';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Grid
+  // Grid based on cs
   const spacing = cs * 0.02;
-  const cols = Math.floor(cs / spacing);
-  const rows = Math.floor(cs / spacing);
+  const cols = Math.floor(canvas.width / spacing);
+  const rows = Math.floor(canvas.height / spacing);
 
   // Glow
   ctx.shadowBlur = cs * 0.008;
@@ -1864,14 +1866,18 @@ function renderComposition(canvas, feats, r) {
     }
   }
 
-  // Decorative nested rectangles
+  // Decorative nested rectangles (centered within canvas)
+  const cw = canvas.width;
+  const ch = canvas.height;
   for (let i = 0; i < 3; i++) {
     const col = feats.palette[Math.floor(r.rand() * feats.palette.length)];
     ctx.strokeStyle = hslaStr(col.h, col.s, col.l, col.a);
     ctx.lineWidth = cs * (0.001 + i * 0.001);
-    const offset = cs * (0.05 + i * 0.01);
-    const size = cs * (0.9 - i * 0.02);
-    ctx.strokeRect(offset, offset, size, size);
+    
+    const marginX = cw * (0.05 + i * 0.01);
+    const marginY = ch * (0.05 + i * 0.01);
+    
+    ctx.strokeRect(marginX, marginY, cw - marginX * 2, ch - marginY * 2);
   }
 
   ctx.shadowBlur = 0;
@@ -1899,9 +1905,6 @@ function drawCurve(startX, startY, cs, feats, r, ctx) {
 
     cx += Math.cos(angle) * stepSize;
     cy += Math.sin(angle) * stepSize;
-
-    cx = Math.min(Math.max(cx, -cs * 0.1), cs * 1.1);
-    cy = Math.min(Math.max(cy, -cs * 0.1), cs * 1.1);
 
     ctx.lineTo(cx, cy);
   }
@@ -2052,7 +2055,9 @@ function drawSurfaces() {
 
     const r = new RandomGenerator(seed);
     const f = buildFeatures(r);
-    renderComposition(canvas, f, r);
+    
+    // Pass the canvas width to maintain proper scale for non-square formats
+    renderComposition(canvas, f, r, canvas.width);
   });
 }
 
